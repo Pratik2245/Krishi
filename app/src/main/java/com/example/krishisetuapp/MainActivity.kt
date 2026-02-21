@@ -71,6 +71,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import com.example.krishisetuapp.db.NpkHistoryActivity
 import org.json.JSONObject
 import kotlin.jvm.java
 
@@ -596,6 +597,35 @@ fun DashboardScreen(
     var predictedN by remember { mutableStateOf<Float?>(null) }
     var predictedP by remember { mutableStateOf<Float?>(null) }
     var predictedK by remember { mutableStateOf<Float?>(null) }
+    fun saveSampleToPrefs(n: Float, p: Float, k: Float) {
+
+        val prefs = context.getSharedPreferences(
+            "npk_prefs",
+            android.content.Context.MODE_PRIVATE
+        )
+
+        val existing = prefs.getString("samples", "[]") ?: "[]"
+        val jsonArray = org.json.JSONArray(existing)
+
+        val obj = org.json.JSONObject()
+        obj.put("N", n)
+        obj.put("P", p)
+        obj.put("K", k)
+        obj.put("timestamp", System.currentTimeMillis()) // 🔥 add this
+
+        jsonArray.put(obj)
+
+        prefs.edit()
+            .putString("samples", jsonArray.toString())
+            .apply()
+    }
+
+    // ✅ THEN PLACE LaunchedEffect HERE
+    LaunchedEffect(predictedN, predictedP, predictedK) {
+        if (predictedN != null && predictedP != null && predictedK != null) {
+            saveSampleToPrefs(predictedN!!, predictedP!!, predictedK!!)
+        }
+    }
     var predictedCrops by remember { mutableStateOf<List<Pair<String, Float>>?>(null) } // (cropName, score)
 
 
@@ -1277,95 +1307,7 @@ fun DashboardScreen(
 
             // -------- 5 Soil Sample System --------
 
-            Card(
-                Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(Modifier.padding(14.dp)) {
 
-                    Text(
-                        "🌾 Farm Soil Sampling (4 Corners + 1 Center)",
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = farmArea,
-                        onValueChange = { farmArea = it },
-                        label = { Text("Farm Area (Acres)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    soilSamples.forEachIndexed { index, sample ->
-
-                        Text(sample.location, fontWeight = FontWeight.SemiBold)
-
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            OutlinedTextField(
-                                value = sample.n.toString(),
-                                onValueChange = { value ->
-                                    val updated = soilSamples.toMutableList()
-                                    updated[index] =
-                                        updated[index].copy(n = value.toFloatOrNull() ?: 0f)
-                                    soilSamples = updated
-                                },
-                                label = { Text("N") },
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            Spacer(Modifier.width(6.dp))
-
-                            OutlinedTextField(
-                                value = sample.p.toString(),
-                                onValueChange = { value ->
-                                    val updated = soilSamples.toMutableList()
-                                    updated[index] =
-                                        updated[index].copy(p = value.toFloatOrNull() ?: 0f)
-                                    soilSamples = updated
-                                },
-                                label = { Text("P") },
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            Spacer(Modifier.width(6.dp))
-
-                            OutlinedTextField(
-                                value = sample.k.toString(),
-                                onValueChange = { value ->
-                                    val updated = soilSamples.toMutableList()
-                                    updated[index] =
-                                        updated[index].copy(k = value.toFloatOrNull() ?: 0f)
-                                    soilSamples = updated
-                                },
-                                label = { Text("K") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        Spacer(Modifier.height(12.dp))
-                    }
-
-                    val avgN = soilSamples.map { it.n }.average()
-                    val avgP = soilSamples.map { it.p }.average()
-                    val avgK = soilSamples.map { it.k }.average()
-
-                    Divider()
-                    Spacer(Modifier.height(10.dp))
-
-                    Text("📊 Average NPK", fontWeight = FontWeight.Bold)
-                    Text("N: ${"%.2f".format(avgN)}")
-                    Text("P: ${"%.2f".format(avgP)}")
-                    Text("K: ${"%.2f".format(avgK)}")
-                }
-            }
 
             Spacer(Modifier.height(20.dp))
             // Soil upload & prediction area (new)
@@ -1531,6 +1473,15 @@ fun DashboardScreen(
             }
 
             Spacer(Modifier.height(30.dp))
+            Button(
+                onClick = {
+                    context.startActivity(
+                        Intent(context, NpkHistoryActivity::class.java)
+                    )
+                }
+            ) {
+                Text("View Local NPK History")
+            }
         }
     }
 }
