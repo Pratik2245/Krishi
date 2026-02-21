@@ -1,18 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:gravity="center"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:text="Welcome Admin"
-        android:textSize="22sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+    <!-- 🌿 Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#2E7D32"
+        android:title="Admin Dashboard"
+        android:titleTextColor="@android:color/white"
+        app:titleTextColor="@android:color/white" />
 
+    <!-- 👨‍🌾 Farmer List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerFarmers"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- 🚪 Logout Button -->
     <Button
         android:id="@+id/btnLogout"
         android:text="Logout"
-        android:layout_width="wrap_content"
+        android:background="#2E7D32"
+        android:textColor="@android:color/white"
+        android:layout_margin="12dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
 </LinearLayout>

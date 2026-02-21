@@ -788,15 +788,16 @@ fun DashboardScreen(
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, uri).copy(Bitmap.Config.ARGB_8888, true)
                 }
-                // 🔥 STEP: Validate PH Image
-                // -----------------------------
+               // -----------------------------
+               // 🔥 STEP: Validate PH Image
+               // -----------------------------
                 val phClassifier = com.example.krishisetuapp.ml.PhClassifier(context)
                 val isPhImage = phClassifier.isPhPaper(bitmap)
 
                 if (!isPhImage) {
                     withContext(Dispatchers.Main) {
                         phValue = null
-                        phMeaning = "Please upload pH strip image only"
+                        phMeaning = "Invalid image - Please upload pH strip photo only"
                         analyzing = false
                     }
                     return@launch
