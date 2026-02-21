@@ -19,17 +19,29 @@ class RegisterActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        val name = findViewById<EditText>(R.id.etName)
+        val phone = findViewById<EditText>(R.id.etPhone)
+        val village = findViewById<EditText>(R.id.etVillage)
         val email = findViewById<EditText>(R.id.etEmail)
         val password = findViewById<EditText>(R.id.etPassword)
+        val confirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
         val registerBtn = findViewById<Button>(R.id.btnRegister)
 
         registerBtn.setOnClickListener {
 
+            val userName = name.text.toString().trim()
+            val userPhone = phone.text.toString().trim()
+            val userVillage = village.text.toString().trim()
             val userEmail = email.text.toString().trim()
             val userPass = password.text.toString().trim()
+            val userConfirmPass = confirmPassword.text.toString().trim()
 
-            if (userEmail.isEmpty() || userPass.isEmpty()) {
-                Toast.makeText(this, "Fields cannot be empty", Toast.LENGTH_SHORT).show()
+            // 🔥 Validation
+            if (userName.isEmpty() || userPhone.isEmpty() ||
+                userVillage.isEmpty() || userEmail.isEmpty() ||
+                userPass.isEmpty() || userConfirmPass.isEmpty()) {
+
+                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -38,15 +50,26 @@ class RegisterActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (userPass != userConfirmPass) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 🔐 Create user in Firebase Auth
             auth.createUserWithEmailAndPassword(userEmail, userPass)
                 .addOnSuccessListener { result ->
 
                     val uid = result.user!!.uid
 
-                    // 🔥 Everyone becomes farmer
+                    // 🔥 Save full details in Firestore
                     val userData = hashMapOf(
+                        "uid" to uid,
+                        "name" to userName,
+                        "phone" to userPhone,
+                        "village" to userVillage,
                         "email" to userEmail,
-                        "role" to "farmer"
+                        "role" to "farmer",   // everyone becomes farmer
+                        "createdAt" to System.currentTimeMillis()
                     )
 
                     db.collection("users").document(uid)
