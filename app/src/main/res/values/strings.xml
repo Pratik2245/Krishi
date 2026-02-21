@@ -4,4 +4,6 @@
     <string name="title_activity_register">RegisterActivity</string>
     <string name="title_activity_user_dashboard">UserDashboardActivity</string>
     <string name="title_activity_admin_dashboard">AdminDashboardActivity</string>
+    <string name="title_activity_soil_sample.kt">SoilSample.kt</string>
+    <string name="title_activity_soil_sample">SoilSample</string>
 </resources>

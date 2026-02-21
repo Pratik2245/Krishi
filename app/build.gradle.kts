@@ -85,4 +85,7 @@ dependencies {                                                             //pha
     implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
     implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
     apply(plugin = "com.google.gms.google-services")
+
+    implementation("org.tensorflow:tensorflow-lite:2.13.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }

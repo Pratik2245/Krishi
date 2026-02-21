@@ -73,6 +73,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import org.json.JSONObject
 
+data class SoilSample(
+    val location: String,
+    var n: Float,
+    var p: Float,
+    var k: Float
+)
 /* ---------- MAIN ACTIVITY ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -590,7 +596,22 @@ fun DashboardScreen(
     var predictedP by remember { mutableStateOf<Float?>(null) }
     var predictedK by remember { mutableStateOf<Float?>(null) }
     var predictedCrops by remember { mutableStateOf<List<Pair<String, Float>>?>(null) } // (cropName, score)
+    // 5-sample system
+    var farmArea by remember { mutableStateOf("") }
 
+    val sampleLocations = listOf(
+        "Corner 1",
+        "Corner 2",
+        "Corner 3",
+        "Corner 4",
+        "Center"
+    )
+
+    var soilSamples by remember {
+        mutableStateOf(
+            sampleLocations.map { SoilSample(it, 0f, 0f, 0f) }
+        )
+    }
     val wsUrl = "ws://192.168.4.1:81/"
 
     // Prepare models lazily
@@ -767,6 +788,19 @@ fun DashboardScreen(
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, uri).copy(Bitmap.Config.ARGB_8888, true)
                 }
+                // 🔥 STEP: Validate PH Image
+                // -----------------------------
+                val phClassifier = com.example.krishisetuapp.ml.PhClassifier(context)
+                val isPhImage = phClassifier.isPhPaper(bitmap)
+
+                if (!isPhImage) {
+                    withContext(Dispatchers.Main) {
+                        phValue = null
+                        phMeaning = "Please upload pH strip image only"
+                        analyzing = false
+                    }
+                    return@launch
+                }
 
                 val w = bitmap.width
                 val h = bitmap.height
@@ -854,6 +888,20 @@ fun DashboardScreen(
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, uri).copy(Bitmap.Config.ARGB_8888, true)
+                }
+                // ---------- STEP 3: VALIDATE IMAGE USING TFLITE SOIL MODEL ----------
+                val classifier = com.example.krishisetuapp.ml.SoilClassifier(context)
+                val isSoil = classifier.isSoil(bitmap)
+
+                if (!isSoil) {
+                    withContext(Dispatchers.Main) {
+                        soilPredColor = "Invalid Image"
+                        soilColorConfidence = null
+                        soilPredType = "Please upload soil photo only"
+                        soilTypeConfidence = null
+                        soilAnalyzing = false
+                    }
+                    return@launch
                 }
 
                 val w = bitmap.width
@@ -1166,6 +1214,99 @@ fun DashboardScreen(
             Text("Last update: $lastUpdate", color = Color.Gray)
             Spacer(Modifier.height(18.dp))
 
+            // -------- 5 Soil Sample System --------
+
+            Card(
+                Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(Modifier.padding(14.dp)) {
+
+                    Text(
+                        "🌾 Farm Soil Sampling (4 Corners + 1 Center)",
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = farmArea,
+                        onValueChange = { farmArea = it },
+                        label = { Text("Farm Area (Acres)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    soilSamples.forEachIndexed { index, sample ->
+
+                        Text(sample.location, fontWeight = FontWeight.SemiBold)
+
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+
+                            OutlinedTextField(
+                                value = sample.n.toString(),
+                                onValueChange = { value ->
+                                    val updated = soilSamples.toMutableList()
+                                    updated[index] =
+                                        updated[index].copy(n = value.toFloatOrNull() ?: 0f)
+                                    soilSamples = updated
+                                },
+                                label = { Text("N") },
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Spacer(Modifier.width(6.dp))
+
+                            OutlinedTextField(
+                                value = sample.p.toString(),
+                                onValueChange = { value ->
+                                    val updated = soilSamples.toMutableList()
+                                    updated[index] =
+                                        updated[index].copy(p = value.toFloatOrNull() ?: 0f)
+                                    soilSamples = updated
+                                },
+                                label = { Text("P") },
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Spacer(Modifier.width(6.dp))
+
+                            OutlinedTextField(
+                                value = sample.k.toString(),
+                                onValueChange = { value ->
+                                    val updated = soilSamples.toMutableList()
+                                    updated[index] =
+                                        updated[index].copy(k = value.toFloatOrNull() ?: 0f)
+                                    soilSamples = updated
+                                },
+                                label = { Text("K") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+                    }
+
+                    val avgN = soilSamples.map { it.n }.average()
+                    val avgP = soilSamples.map { it.p }.average()
+                    val avgK = soilSamples.map { it.k }.average()
+
+                    Divider()
+                    Spacer(Modifier.height(10.dp))
+
+                    Text("📊 Average NPK", fontWeight = FontWeight.Bold)
+                    Text("N: ${"%.2f".format(avgN)}")
+                    Text("P: ${"%.2f".format(avgP)}")
+                    Text("K: ${"%.2f".format(avgK)}")
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
             // Soil upload & prediction area (new)
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8F0)), shape = RoundedCornerShape(12.dp)) {
                 Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
