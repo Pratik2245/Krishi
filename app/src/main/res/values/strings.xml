@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">KrishiSetu</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_register">RegisterActivity</string>
+    <string name="title_activity_user_dashboard">UserDashboardActivity</string>
+    <string name="title_activity_admin_dashboard">AdminDashboardActivity</string>
+</resources>
