@@ -6,4 +6,7 @@
     <string name="title_activity_admin_dashboard">AdminDashboardActivity</string>
     <string name="title_activity_soil_sample.kt">SoilSample.kt</string>
     <string name="title_activity_soil_sample">SoilSample</string>
+    <string name="title_activity_report">ReportActivity</string>
+    <string name="title_activity_weather_api_helper">WeatherApiHelper</string>
+    <string name="title_activity_pdf_report_generator">PdfReportGenerator</string>
 </resources>

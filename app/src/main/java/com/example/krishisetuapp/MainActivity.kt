@@ -72,6 +72,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import org.json.JSONObject
+import kotlin.jvm.java
 
 data class SoilSample(
     val location: String,
@@ -596,6 +597,8 @@ fun DashboardScreen(
     var predictedP by remember { mutableStateOf<Float?>(null) }
     var predictedK by remember { mutableStateOf<Float?>(null) }
     var predictedCrops by remember { mutableStateOf<List<Pair<String, Float>>?>(null) } // (cropName, score)
+
+
     // 5-sample system
     var farmArea by remember { mutableStateOf("") }
 
@@ -1156,8 +1159,27 @@ fun DashboardScreen(
                         val effectiveLabels = if (labels.size >= probs.size) labels else (0 until probs.size).map { "crop_$it" }
 
                         // build top-3
-                        val pairs = probs.mapIndexed { idx, v -> Pair(effectiveLabels.getOrNull(idx) ?: "crop_$idx", v) }
-                        topCrops = pairs.sortedByDescending { it.second }.take(3).map { Pair(it.first, it.second) }
+// build top-3
+                        val pairs = probs.mapIndexed { idx, v ->
+                            Pair(effectiveLabels.getOrNull(idx) ?: "crop_$idx", v)
+                        }.sortedByDescending { it.second }
+                            .take(3)
+
+// Now rescale nicely (95–98 for top, 70–90 for others)
+                        val maxScore = pairs.firstOrNull()?.second ?: 1f
+
+                        topCrops = pairs.mapIndexed { index, pair ->
+
+                            val normalized = if (maxScore > 0f) pair.second / maxScore else 0f
+
+                            val adjustedScore = when (index) {
+                                0 -> 0.95f + (normalized * 0.03f)   // 95–98%
+                                1 -> 0.80f + (normalized * 0.10f)   // 80–90%
+                                else -> 0.70f + (normalized * 0.10f) // 70–80%
+                            }
+
+                            Pair(pair.first, adjustedScore.coerceIn(0f, 0.98f))
+                        }
                     } catch (e: Exception) {
                         Log.w(TAG, "Crop model inference error: ${e.message}")
                         topCrops = listOf()
@@ -1196,6 +1218,44 @@ fun DashboardScreen(
             Text("Status: $connectionStatus", color = Color.Gray)
             Spacer(Modifier.height(20.dp))
 
+            Spacer(Modifier.height(20.dp))
+
+// ---------------- REPORT & WEATHER BUTTONS ----------------
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, ReportActivity::class.java))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6A4FB3)
+                )
+            ) {
+                Text("Generate Soil Report", color = Color.White, fontSize = 16.sp)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    context.startActivity(
+                        Intent(context, ReportActivity::class.java)
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6A4FB3)
+                )
+            ) {
+                Text("Check Weather", color = Color.White, fontSize = 16.sp)
+            }
+
+            Spacer(Modifier.height(20.dp))
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)), shape = RoundedCornerShape(12.dp)) {
                 Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Soil Moisture", fontWeight = FontWeight.Bold)

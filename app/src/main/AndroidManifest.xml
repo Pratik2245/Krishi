@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="36" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -26,9 +29,13 @@
         android:theme="@style/Theme.KrishiSetuApp"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ReportActivity"
+            android:exported="false"
+            android:label="@string/title_activity_report"
+            android:theme="@style/Theme.KrishiSetuApp" />
+        <activity
             android:name=".FarmerDetailsActivity"
-            android:exported="false" />
-        <!-- LOGIN (Launcher) -->
+            android:exported="false" /> <!-- LOGIN (Launcher) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"

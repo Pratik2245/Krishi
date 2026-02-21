@@ -6,28 +6,31 @@ plugins {
 }
 
 android {
+
     namespace = "com.example.krishisetuapp"
     compileSdk = 36
-    // ✅ Updated to match Compose & AndroidX requirements
 
     defaultConfig {
         applicationId = "com.example.krishisetuapp"
         minSdk = 24
-        targetSdk = 36   // ✅ Match targetSdk to 36
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ✅ ADD THIS FOR WEATHER API
+        buildConfigField(
+            "String",
+            "OPEN_WEATHER_API_KEY",
+            "\"${project.properties["OPEN_WEATHER_API_KEY"]}\""
+        )
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    // ✅ VERY IMPORTANT
+    buildFeatures {
+        compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -39,9 +42,16 @@ android {
         jvmTarget = "11"
     }
 
-    buildFeatures {
-        compose = true
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
 }
 
 dependencies {                                                             //phase 1 working code
@@ -92,4 +102,5 @@ dependencies {                                                             //pha
 
     implementation("org.tensorflow:tensorflow-lite:2.13.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }
