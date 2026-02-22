@@ -12,7 +12,7 @@ import java.util.*
 
 class PdfReportGenerator(private val context: Context) {
 
-    fun generateReport(): Boolean {
+    fun generateReport(reportData: ReportData): Boolean {
         try {
             val pdfDocument = PdfDocument()
             val paint = Paint()
@@ -55,12 +55,30 @@ class PdfReportGenerator(private val context: Context) {
 
             val dateTime = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).format(Date())
 
-            canvas.drawText("Name: ____________________", 40f, y, textPaint)
-            y += 20
-            canvas.drawText("Location: ____________________", 40f, y, textPaint)
-            y += 20
+            canvas.drawText("Name: ${reportData.name}", 40f, y, textPaint)
+            y += 25
+
+            canvas.drawText("Village: ${reportData.village}", 40f, y, textPaint)
+            y += 25
+
+            canvas.drawText(
+                "Latitude: ${String.format("%.6f", reportData.latitude)}",
+                40f,
+                y,
+                textPaint
+            )
+            y += 25
+
+            canvas.drawText(
+                "Longitude: ${String.format("%.6f", reportData.longitude)}",
+                40f,
+                y,
+                textPaint
+            )
+            y += 25
+
             canvas.drawText("Date & Time: $dateTime", 40f, y, textPaint)
-            y += 20
+            y += 30
             canvas.drawText("No. of Samples: 5", 40f, y, textPaint)
 
             // ---------- TABLE ----------
@@ -103,18 +121,20 @@ class PdfReportGenerator(private val context: Context) {
             }
 
             // Draw Data Rows (5 Samples)
-            for (row in 1..5) {
+            for (sample in reportData.samples) {
                 currentY += rowHeight
                 currentX = startX
 
                 val rowData = arrayOf(
-                    row.toString(),
-                    "120-46-60",
-                    "6.8",
-                    "Loamy",
-                    "45%",
-                    "28°C",
-                    "Wheat, Rice"
+                    sample.sampleNo.toString(),
+                    "${String.format("%.2f", sample.n)}-" +
+                            "${String.format("%.2f", sample.p)}-" +
+                            "${String.format("%.2f", sample.k)}",
+                    sample.ph.toString(),
+                    sample.soilType,
+                    "${sample.moisture}%",
+                    "${sample.temperature}°C",
+                    sample.crops
                 )
 
                 for (i in rowData.indices) {
@@ -133,14 +153,24 @@ class PdfReportGenerator(private val context: Context) {
             // ---------- AVERAGES ----------
             currentY += rowHeight + 30
 
-            canvas.drawText("Average of NPK: 120-46-60", 40f, currentY, textPaint)
+            canvas.drawText(
+                "Average NPK: ${
+                    String.format("%.2f", reportData.avgN)
+                }-${
+                    String.format("%.2f", reportData.avgP)
+                }-${
+                    String.format("%.2f", reportData.avgK)
+                }",
+                40f,
+                currentY,
+                textPaint
+            )
             currentY += 18
-            canvas.drawText("Average of pH: 6.8", 40f, currentY, textPaint)
+            canvas.drawText("Average pH: ${reportData.avgPh}", 40f, currentY, textPaint)
             currentY += 18
-            canvas.drawText("Average of Soil Temperature: 28°C", 40f, currentY, textPaint)
+            canvas.drawText("Average Temperature: ${reportData.avgTemp}°C", 40f, currentY, textPaint)
             currentY += 18
-            canvas.drawText("Average of Soil Moisture: 45%", 40f, currentY, textPaint)
-
+            canvas.drawText("Average Moisture: ${reportData.avgMoisture}%", 40f, currentY, textPaint)
             pdfDocument.finishPage(page)
 
             val dir = File(
