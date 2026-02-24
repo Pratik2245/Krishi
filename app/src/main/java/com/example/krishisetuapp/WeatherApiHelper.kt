@@ -1,5 +1,4 @@
 package com.example.krishisetuapp
-import com.example.krishisetuapp.BuildConfig
 
 import android.util.Log
 import org.json.JSONObject
@@ -7,42 +6,31 @@ import java.net.URL
 
 class WeatherApiHelper {
 
-    companion object {
-        private const val TAG = "WeatherApiHelper"
-    }
-
     fun willRainInNext48Hours(
         latitude: Double,
         longitude: Double,
         apiKey: String
-    ): Boolean {
-
-        // 🔐 Safety check
-        if (apiKey.isBlank() || apiKey == "null") {
-            Log.e(TAG, "API key is missing")
-            return false
-        }
+    ): String {
 
         return try {
+
+            if (apiKey.isBlank()) {
+                Log.e("WeatherAPI", "API Key is empty")
+                return "ERROR"
+            }
 
             val url =
                 "https://api.openweathermap.org/data/2.5/forecast" +
                         "?lat=$latitude&lon=$longitude&appid=$apiKey&units=metric"
 
-            Log.d(TAG, "Calling URL: $url")
+            Log.d("WeatherAPI", "URL: $url")
 
             val response = URL(url).readText()
             val jsonObject = JSONObject(response)
 
-            val cod = jsonObject.getString("cod")
-            if (cod != "200") {
-                Log.e(TAG, "API Error Code: $cod")
-                return false
-            }
-
             val forecastList = jsonObject.getJSONArray("list")
 
-            // 48 hours = 16 entries (3-hour interval)
+            // Check next 16 entries (48 hours)
             for (i in 0 until minOf(16, forecastList.length())) {
 
                 val item = forecastList.getJSONObject(i)
@@ -50,22 +38,22 @@ class WeatherApiHelper {
                 val mainWeather =
                     weatherArray.getJSONObject(0).getString("main")
 
-                Log.d(TAG, "Forecast[$i]: $mainWeather")
+                Log.d("WeatherAPI", "Forecast[$i]: $mainWeather")
 
-                if (
-                    mainWeather.equals("Rain", true) ||
-                    mainWeather.equals("Drizzle", true) ||
-                    mainWeather.equals("Thunderstorm", true)
+                if (mainWeather.equals("Rain", true)
+                    || mainWeather.equals("Drizzle", true)
+                    || mainWeather.equals("Thunderstorm", true)
                 ) {
-                    return true
+                    return "RAIN"
                 }
             }
 
-            false
+            return "CLEAR"
 
         } catch (e: Exception) {
-            Log.e(TAG, "Weather API failed", e)
-            false
+            e.printStackTrace()
+            Log.e("WeatherAPI", "API ERROR: ${e.message}")
+            return "ERROR"
         }
     }
 }

@@ -47,7 +47,7 @@ fun ReportScreen() {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    var fertilizerRecommendation by remember { mutableStateOf("") }
     val fusedLocationClient =
         remember { LocationServices.getFusedLocationProviderClient(context) }
 
@@ -100,8 +100,6 @@ fun ReportScreen() {
 
                         val uid = currentUser.uid
                         val db = FirebaseFirestore.getInstance()
-
-// 🔥 Directly fetch using UID (FAST & CORRECT)
                         db.collection("users")
                             .document(uid)
                             .get()
@@ -140,8 +138,10 @@ fun ReportScreen() {
 
                                         val predictedN =
                                             soilDoc.getDouble("predicted_N")?.toFloat() ?: 0f
+
                                         val predictedP =
                                             soilDoc.getDouble("predicted_P")?.toFloat() ?: 0f
+
                                         val predictedK =
                                             soilDoc.getDouble("predicted_K")?.toFloat() ?: 0f
 
@@ -242,7 +242,7 @@ fun ReportScreen() {
 
                             val helper = WeatherApiHelper()
 
-                            val willRain =
+                            val weatherCondition =
                                 helper.willRainInNext48Hours(
                                     lat,
                                     lng,
@@ -251,19 +251,22 @@ fun ReportScreen() {
 
                             withContext(Dispatchers.Main) {
 
-                                if (willRain) {
-                                    Toast.makeText(
-                                        context,
-                                        "🚨 Rain expected in next 48 hours.\nDelay fertilizer!",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "✅ No rain expected.\nSafe to apply fertilizer.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                val recommendation = when (weatherCondition) {
+
+                                    "RAIN" ->
+                                        "🚨 Rain expected.\nAvoid applying Urea or Nitrogen fertilizers.\nDelay application."
+
+                                    "CLOUDY" ->
+                                        "☁ Cloudy weather.\nApply slow-release fertilizers."
+
+                                    "CLEAR" ->
+                                        "☀ No rain expected.\nSafe to apply NPK fertilizer."
+
+                                    else ->
+                                        "⚠ Unable to fetch weather.\nTry again."
                                 }
+
+                                fertilizerRecommendation = recommendation
                             }
                         }
                     }
@@ -272,10 +275,40 @@ fun ReportScreen() {
                     .fillMaxWidth()
                     .height(55.dp)
             ) {
-                Text("Check Rain Before Fertilizer")
+                Text("Weather Based Fertilizer Prediction")
             }
 
             Spacer(Modifier.height(40.dp))
+            if (fertilizerRecommendation.isNotEmpty()) {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+
+                        Text(
+                            text = "🌾 Fertilizer Recommendation",
+                            fontSize = 18.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = fertilizerRecommendation,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -1,12 +1,13 @@
 package com.example.krishisetuapp.db
+
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.view.Gravity
+import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import com.example.krishisetuapp.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,23 +20,70 @@ class NpkHistoryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Root Layout
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(30, 30, 30, 30)
+        // Root ScrollView
+        val scrollView = ScrollView(this)
+        val rootLayout = LinearLayout(this)
+        rootLayout.orientation = LinearLayout.VERTICAL
+        rootLayout.setPadding(40, 40, 40, 40)
+        rootLayout.setBackgroundColor(Color.parseColor("#F1FFF1"))
+        scrollView.addView(rootLayout)
 
-        val textView = TextView(this)
-        textView.textSize = 16f
+        // Title
+        val title = TextView(this)
+        title.text = "🌾 KrishiSetu NPK History"
+        title.textSize = 22f
+        title.setTextColor(Color.parseColor("#1B5E20"))
+        title.gravity = Gravity.CENTER
+        title.setPadding(0, 0, 0, 30)
+        rootLayout.addView(title)
 
+        // Card for Data
+        val card = CardView(this)
+        card.radius = 20f
+        card.setCardBackgroundColor(Color.WHITE)
+        card.setContentPadding(30, 30, 30, 30)
+        card.cardElevation = 12f
+
+        val dataText = TextView(this)
+        dataText.textSize = 16f
+        dataText.setTextColor(Color.DKGRAY)
+        card.addView(dataText)
+        rootLayout.addView(card)
+
+        // Spacer
+        val space = Space(this)
+        space.minimumHeight = 40
+        rootLayout.addView(space)
+
+        // Buttons Layout
+        val buttonLayout = LinearLayout(this)
+        buttonLayout.orientation = LinearLayout.VERTICAL
+        buttonLayout.gravity = Gravity.CENTER
+        buttonLayout.setPadding(0, 20, 0, 0)
+
+        // Upload Button
         val uploadButton = Button(this)
-        uploadButton.text = "Upload To Firebase"
+        uploadButton.text = "☁ Upload To Firebase"
+        uploadButton.setBackgroundColor(Color.parseColor("#2E7D32"))
+        uploadButton.setTextColor(Color.WHITE)
+        uploadButton.textSize = 16f
 
-        layout.addView(textView)
-        layout.addView(uploadButton)
+        // Soil Health Button
+        val healthButton = Button(this)
+        healthButton.text = "🌿 View Soil Health Report"
+        healthButton.setBackgroundColor(Color.parseColor("#388E3C"))
+        healthButton.setTextColor(Color.WHITE)
+        healthButton.textSize = 16f
 
-        setContentView(layout)
+        buttonLayout.addView(uploadButton)
+        buttonLayout.addView(Space(this).apply { minimumHeight = 20 })
+        buttonLayout.addView(healthButton)
 
-        // 🔥 Back always goes to Dashboard
+        rootLayout.addView(buttonLayout)
+
+        setContentView(scrollView)
+
+        // Back to Dashboard
         onBackPressedDispatcher.addCallback(this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
@@ -69,15 +117,11 @@ class NpkHistoryActivity : AppCompatActivity() {
             totalK += k
 
             sampleList.add(
-                mapOf(
-                    "N" to n,
-                    "P" to p,
-                    "K" to k
-                )
+                mapOf("N" to n, "P" to p, "K" to k)
             )
 
-            builder.append("Sample ${i + 1}\n")
-            builder.append("N: $n  P: $p  K: $k\n\n")
+            builder.append("🌱 Sample ${i + 1}\n")
+            builder.append("   N: $n   P: $p   K: $k\n\n")
         }
 
         var avgN = 0f
@@ -90,7 +134,8 @@ class NpkHistoryActivity : AppCompatActivity() {
             avgP = totalP / jsonArray.length()
             avgK = totalK / jsonArray.length()
 
-            builder.append("-------- AVERAGE --------\n")
+            builder.append("━━━━━━━━━━━━━━━━━━\n")
+            builder.append("🌿 AVERAGE VALUES\n")
             builder.append("Avg N: %.2f\n".format(avgN))
             builder.append("Avg P: %.2f\n".format(avgP))
             builder.append("Avg K: %.2f\n".format(avgK))
@@ -98,11 +143,12 @@ class NpkHistoryActivity : AppCompatActivity() {
         } else {
             builder.append("No samples available.")
             uploadButton.isEnabled = false
+            healthButton.isEnabled = false
         }
 
-        textView.text = builder.toString()
+        dataText.text = builder.toString()
 
-        // 🔥 Upload only when button clicked
+        // Upload Button Logic (UNCHANGED)
         uploadButton.setOnClickListener {
 
             if (jsonArray.length() == 0) {
@@ -130,27 +176,28 @@ class NpkHistoryActivity : AppCompatActivity() {
             db.collection("npk_average_records")
                 .add(uploadData)
                 .addOnSuccessListener {
-
-                    Toast.makeText(
-                        this,
+                    Toast.makeText(this,
                         "Uploaded successfully & local data cleared",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        Toast.LENGTH_SHORT).show()
 
-                    // 🔥 Clear SharedPreferences
-                    prefs.edit()
-                        .putString("samples", "[]")
-                        .apply()
-
+                    prefs.edit().putString("samples", "[]").apply()
                     uploadButton.isEnabled = false
+                    healthButton.isEnabled = false
                 }
                 .addOnFailureListener {
-                    Toast.makeText(
-                        this,
+                    Toast.makeText(this,
                         "Upload failed: ${it.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                        Toast.LENGTH_LONG).show()
                 }
+        }
+
+        // Soil Health Navigation
+        healthButton.setOnClickListener {
+            val intent = Intent(this, SoilHealthReportActivity::class.java)
+            intent.putExtra("avgN", avgN)
+            intent.putExtra("avgP", avgP)
+            intent.putExtra("avgK", avgK)
+            startActivity(intent)
         }
     }
 }

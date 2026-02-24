@@ -29,6 +29,7 @@
         android:theme="@style/Theme.KrishiSetuApp"
         android:usesCleartextTraffic="true">
         <activity android:name=".db.NpkHistoryActivity"/>
+        <activity android:name=".db.SoilHealthReportActivity"/>
         <activity
             android:name=".ReportActivity"
             android:exported="false"

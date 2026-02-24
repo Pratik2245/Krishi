@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Generate Soil Report"
-        android:backgroundTint="#34eb77"/>
+        android:backgroundTint="@color/black"/>
 
     <!-- New Button for Weather -->
     <Button
@@ -21,6 +21,6 @@
         android:layout_height="wrap_content"
         android:text="Check Weather"
         android:layout_marginTop="20dp"
-        android:backgroundTint="#34eb77"/>
+        android:backgroundTint="@color/black"/>
 
 </LinearLayout>
